@@ -95,8 +95,19 @@ Use a separate folder under `runs/` for each flow run, with `results/` and `repo
 ```text
 designs/uart/
 ├── README.md
-├── scripts/       # Helper scripts and the manual flow guide
-├── src/           # RTL, testbenches, and Quartus files
-├── runs/          # Results from ASIC flow runs
+├── scripts/       # ASIC flow guide, tool scripts, and shared settings
+├── src/
+│   ├── *.sv       # UART and FIFO SystemVerilog source files
+│   ├── testbench/ # Testbenches for the UART blocks
+│   ├── Image/     # Design and layout images
+│   ├── db/        # Quartus database files
+│   ├── work/      # Quartus working files
+│   ├── output_files/     # Quartus output files
+│   ├── incremental_db/   # Quartus incremental compilation data
+│   └── simulation/       # Simulation files
+├── runs/          # Separate results and reports for each ASIC flow run
+├── run -> runs/... # Link to the currently selected flow run
 └── archive_old/   # Older flow settings and results
 ```
+
+Each folder under `runs/` keeps the results of one flow run, usually in `results/` and `reports/`. The `run` link points to the run used by the current flow commands. The `src/db/`, `src/work/`, and other Quartus folders contain tool-generated project data; the main design source is in the SystemVerilog files in `src/`.
