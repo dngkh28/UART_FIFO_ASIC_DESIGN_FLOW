@@ -1,0 +1,9 @@
+module receiver(clk,rst,rx,rx_data_out, re, full, empty);
+input logic clk;
+input logic rst;
+input logic rx;
+input logic re;
+output logic [7:0]rx_data_out;
+output logic empty_rx;
+output logic full
+endmodule

@@ -1,0 +1,361 @@
+m255
+K4
+z2
+!s11f MIXED_VERSIONS
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 d/home/thu/altera_lite/25.1std/Work_space/uart/src
+vFIFO
+Z1 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+Z2 !s110 1793025618
+!i10b 1
+!s100 5QgcnEo95:S?gYeej6CA92
+Z3 !s11b Dg1SIo80bB@j0V0VzS_@n1
+ITTe_nTi:KnkAn6MYW36mM0
+Z4 VDg1SIo80bB@j0V0VzS_@n1
+S1
+R0
+w1792833527
+8FIFO.sv
+FFIFO.sv
+!i122 18
+L0 1 31
+Z5 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z6 !s108 1793025618.000000
+!s107 uart_tb.sv|uart.sv|transmitter.sv|receiver.sv|uart_rx.sv|uart_tx.sv|FIFO.sv|
+Z7 !s90 -sv|FIFO.sv|uart_tx.sv|uart_rx.sv|receiver.sv|transmitter.sv|uart.sv|uart_tb.sv|
+!i113 1
+o-sv
+Z8 tCvgOpt 0
+n@f@i@f@o
+vFIFO_tb
+R1
+!s110 1792942434
+!i10b 1
+!s100 ChiiN=chNABdO=2BG;7FS2
+R3
+I`lHY7L5C?[8Ni2jai=nh]0
+R4
+S1
+R0
+w1792941779
+8testbench/FIFO_tb.sv
+Ftestbench/FIFO_tb.sv
+!i122 13
+L0 5 277
+R5
+r1
+!s85 0
+31
+!s108 1792942434.000000
+!s107 testbench/FIFO_tb.sv|FIFO.sv|
+!s90 -sv|FIFO.sv|testbench/FIFO_tb.sv|
+!i113 1
+o-sv
+R8
+n@f@i@f@o_tb
+vreceiver
+R1
+R2
+!i10b 1
+!s100 eHHO9Q5g<Z2K7`iJJjiGS0
+R3
+I]h:8Z^ETLc>cA7Q2klYVg0
+R4
+S1
+R0
+w1792855686
+8receiver.sv
+Freceiver.sv
+!i122 18
+L0 1 39
+R5
+r1
+!s85 0
+31
+R6
+Z9 !s107 uart_tb.sv|uart.sv|transmitter.sv|receiver.sv|uart_rx.sv|uart_tx.sv|FIFO.sv|
+R7
+!i113 1
+o-sv
+R8
+vreceiver_tb
+R1
+!s110 1792941475
+!i10b 1
+!s100 SD@:EJ:HNE3Zf=U1[IonV0
+R3
+IS464>jEWJR83NlF0V>W]^1
+R4
+S1
+R0
+Z10 w1792940658
+8testbench/receiver_tb.sv
+Ftestbench/receiver_tb.sv
+!i122 12
+L0 5 188
+R5
+r1
+!s85 0
+31
+!s108 1792941475.000000
+!s107 testbench/transmitter_tb.sv|testbench/receiver_tb.sv|transmitter.sv|receiver.sv|uart_rx.sv|uart_tx.sv|FIFO.sv|
+!s90 -sv|FIFO.sv|uart_tx.sv|uart_rx.sv|receiver.sv|transmitter.sv|testbench/receiver_tb.sv|testbench/transmitter_tb.sv|
+!i113 1
+o-sv
+R8
+vtb_uart_rx
+R1
+Z11 !s110 1792858098
+!i10b 1
+!s100 <X@Z^H8oOf@67a:JEgBfA3
+R3
+I=aZ1VH2oVFWlG]e>`3Xa]3
+R4
+S1
+R0
+w1792858032
+Z12 8testbench/uart_rx_tb.sv
+Z13 Ftestbench/uart_rx_tb.sv
+!i122 4
+Z14 L0 5 135
+R5
+r1
+!s85 0
+31
+Z15 !s108 1792858098.000000
+Z16 !s107 testbench/uart_tx_tb.sv|testbench/uart_rx_tb.sv|
+Z17 !s90 testbench/uart_rx_tb.sv|testbench/uart_tx_tb.sv|
+!i113 1
+R8
+vtb_uart_tx
+R1
+R11
+!i10b 1
+!s100 kaJZ8l4Cc<Jk]kc[M9HX@3
+R3
+IG0zE3FT9J7I<hdYY;VdlW3
+R4
+S1
+R0
+w1792857768
+Z18 8testbench/uart_tx_tb.sv
+Z19 Ftestbench/uart_tx_tb.sv
+!i122 4
+L0 5 149
+R5
+r1
+!s85 0
+31
+R15
+R16
+R17
+!i113 1
+R8
+vtransmitter
+R1
+R2
+!i10b 1
+!s100 V@8j873dkE[Ph0YF=NTiT1
+R3
+IhGkEK3B7Z[bc[bZb;JlzG1
+R4
+S1
+R0
+w1792857368
+8transmitter.sv
+Ftransmitter.sv
+!i122 18
+L0 1 34
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+o-sv
+R8
+vtransmitter_tb
+R1
+!s110 1792986194
+!i10b 1
+!s100 9>L:L_=n8d_dfad?IQOUg3
+R3
+ISV]EoW`g7koTH8T?;CMUF0
+R4
+S1
+R0
+R10
+8testbench/transmitter_tb.sv
+Ftestbench/transmitter_tb.sv
+!i122 15
+L0 5 215
+R5
+r1
+!s85 0
+31
+!s108 1792986194.000000
+!s107 testbench/transmitter_tb.sv|
+!s90 -sv|testbench/transmitter_tb.sv|
+!i113 1
+o-sv
+R8
+vuart
+R1
+R2
+!i10b 1
+!s100 Nl=fZlcWcfUhLf34=iCYm3
+R3
+IPbJU:U?ACV5nRW^>JeETQ2
+R4
+S1
+R0
+Z20 w1793025366
+8uart.sv
+Fuart.sv
+!i122 18
+L0 18 36
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+o-sv
+R8
+vuart_rx
+R1
+R2
+!i10b 1
+!s100 Ck==HW7aY4jOiAMei=@><1
+R3
+I?lAfdX@9L;8S=`4_4_4Rm1
+R4
+S1
+R0
+w1792857800
+8uart_rx.sv
+Fuart_rx.sv
+!i122 18
+L0 1 129
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+o-sv
+R8
+vuart_rx_tb
+R1
+!s110 1792860043
+!i10b 1
+!s100 mVI2kCI>L5`V;k1nQ?ZG91
+R3
+I1P^6LIgHeZ<Bcembd1I?]0
+R4
+S1
+R0
+w1792860019
+R12
+R13
+!i122 11
+R14
+R5
+r1
+!s85 0
+31
+!s108 1792860043.000000
+!s107 testbench/uart_rx_tb.sv|uart_rx.sv|
+!s90 -sv|uart_rx.sv|testbench/uart_rx_tb.sv|
+!i113 1
+o-sv
+R8
+vuart_tb
+R1
+R2
+!i10b 1
+!s100 g@aMBWEFHT`XK1Q0hP>?A0
+R3
+ICYK26cEdRl5^k:e@O_P0:0
+R4
+S1
+R0
+R20
+8uart_tb.sv
+Fuart_tb.sv
+!i122 18
+L0 2 82
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+o-sv
+R8
+vuart_tx
+R1
+R2
+!i10b 1
+!s100 =SUPdHXc2OW9c?1?hChLN2
+R3
+IfkAJ1>MoU;6^Fi>T`ADW40
+R4
+S1
+R0
+w1792855871
+8uart_tx.sv
+Fuart_tx.sv
+!i122 18
+L0 1 122
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+o-sv
+R8
+vuart_tx_tb
+R1
+!s110 1792859100
+!i10b 1
+!s100 i9CfaEQhMf36oJCk<Tc=f3
+R3
+I@T1_LBh37IaDS4=RW=F880
+R4
+S1
+R0
+w1792859075
+R18
+R19
+!i122 10
+L0 3 149
+R5
+r1
+!s85 0
+31
+!s108 1792859100.000000
+!s107 testbench/uart_tx_tb.sv|
+!s90 -sv|testbench/uart_tx_tb.sv|
+!i113 1
+o-sv
+R8

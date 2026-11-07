@@ -1,0 +1,57 @@
+module uart_tb();
+  reg clk,rst; 
+  reg rx;
+  reg [7:0] tx_data_in;
+  reg start;
+  logic tx; 
+  logic [7:0] rx_data_out;
+  logic tx_active;
+  logic done_tx;
+  
+  // 1. Gọi module cần kiểm tra (DUT)
+  uart #(.clk_freq(80000000), .baud_rate(115200)) dut (
+    .clk(clk), .rst(rst), .rx(rx),
+    .tx_data_in(tx_data_in), .start(start),
+    .rx_data_out(rx_data_out), .tx(tx),
+    .tx_active(tx_active), .done_tx(done_tx)
+  );
+  
+    // 2. Tạo clock 50 MHz (chu kỳ 20 ns)
+  initial clk = 0;
+  always #10 clk = ~clk;
+    // 3. Nối vòng: dây tx đưa thẳng về rx
+  always @(*) rx = tx;
+  // 4. Task gửi 1 byte rồi kiểm tra byte nhận về
+  task send_byte(input [7:0] data);
+    begin
+      @(negedge clk);
+      tx_data_in = data;
+      start      = 1;
+      @(negedge clk);
+      start      = 0;               // start chỉ là xung 1 chu kỳ
+      @(posedge done_tx);           // chờ phát xong cả khung
+      @(negedge clk);
+      if (rx_data_out === data)
+        $display("[%0t] PASS: gui 0x%h, nhan 0x%h", $time, data, rx_data_out);
+      else
+        $display("[%0t] FAIL: gui 0x%h, nhan 0x%h", $time, data, rx_data_out);
+    end
+  endtask
+  // 5. Kịch bản kiểm tra
+  initial begin
+    $timeformat(-6, 1, " us", 10);
+    rst = 1; start = 0; tx_data_in = 8'h00;
+    repeat (5) @(negedge clk);
+    rst = 0;
+    repeat (5) @(negedge clk);
+
+    send_byte(8'h41);
+    send_byte(8'hA5);
+    send_byte(8'h00);
+    send_byte(8'hFF);
+
+    $display("Ket thuc mo phong");
+    $finish;
+  end
+
+endmodule

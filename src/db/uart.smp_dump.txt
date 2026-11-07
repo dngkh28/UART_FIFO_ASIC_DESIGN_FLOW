@@ -1,0 +1,16 @@
+
+State Machine - |uart|transmitter:trans|uart_tx:utx|tx_STATE
+Name tx_STATE.tx_STOP tx_STATE.tx_DATA tx_STATE.tx_START tx_STATE.tx_IDLE tx_STATE.tx_DONE 
+tx_STATE.tx_IDLE 0 0 0 0 0 
+tx_STATE.tx_START 0 0 1 1 0 
+tx_STATE.tx_DATA 0 1 0 1 0 
+tx_STATE.tx_STOP 1 0 0 1 0 
+tx_STATE.tx_DONE 0 0 0 1 1 
+
+State Machine - |uart|receiver:rec|uart_rx:urx|rx_STATE
+Name rx_STATE.rx_STOP rx_STATE.rx_DATA rx_STATE.rx_START rx_STATE.rx_IDLE rx_STATE.rx_DONE 
+rx_STATE.rx_IDLE 0 0 0 0 0 
+rx_STATE.rx_START 0 0 1 1 0 
+rx_STATE.rx_DATA 0 1 0 1 0 
+rx_STATE.rx_STOP 1 0 0 1 0 
+rx_STATE.rx_DONE 0 0 0 1 1 

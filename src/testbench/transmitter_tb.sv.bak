@@ -1,0 +1,165 @@
+`timescale 1ns/1ps
+module transmitter_tb();
+
+  localparam CLK_FREQ  = 80000000;
+  localparam BAUD_RATE = 115200;
+  localparam CLK_DIV   = CLK_FREQ/BAUD_RATE;      // 694
+  localparam real CLK_T = 1.0e9/CLK_FREQ;         // 12.5 ns
+  localparam real BIT_T = CLK_DIV*CLK_T;          // 8675 ns (thoi luong bit thuc cua DUT)
+
+  reg clk, rst, start;
+  reg [7:0] tx_data_in;
+  wire tx, tx_active, done_tx;
+  integer errors, tests, k;
+  realtime t0, t1;
+
+  // 1. DUT: bo phat
+  uart_tx #(.clk_freq(CLK_FREQ), .baud_rate(BAUD_RATE)) dut (
+    .clk(clk), .rst(rst), .start(start), .tx_data_in(tx_data_in),
+    .tx(tx), .tx_active(tx_active), .done_tx(done_tx)
+  );
+
+  // 2. Clock 80 MHz (chu ky 12.5 ns)
+  initial clk = 0;
+  always #(CLK_T/2) clk = ~clk;
+
+  // 3. Kiem tra mot dieu kien (chi in khi sai)
+  task automatic check(input string name, input string what, input bit ok);
+    begin
+      tests = tests + 1;
+      if (!ok) begin
+        errors = errors + 1;
+        $display("[%0t] FAIL: %s: %s", $time, name, what);
+      end
+    end
+  endtask
+
+  // 4. Xung start rong 1 chu ky
+  task automatic pulse_start(input [7:0] data);
+    begin
+      @(negedge clk);
+      tx_data_in = data;
+      start = 1;
+      @(negedge clk);
+      start = 0;
+    end
+  endtask
+
+  // 5. Thu 1 khung tren tx, lay mau o giua moi bit, kiem tra du lieu,
+  //    tx_active va xung done_tx
+  task automatic capture_and_check(input string name, input [7:0] expv);
+    reg [7:0] got;
+    integer i;
+    realtime t_fall, t_done;
+    begin
+      @(negedge tx);
+      t_fall = $realtime;
+      #(BIT_T/2);
+      check(name, "start bit phai bang 0", tx === 1'b0);
+      check(name, "tx_active phai bang 0 o start bit", tx_active === 1'b0);
+      for (i = 0; i < 8; i = i + 1) begin
+        #(BIT_T);
+        got[i] = tx;
+        check(name, "tx_active phai bang 1 o bit du lieu", tx_active === 1'b1);
+      end
+      #(BIT_T);
+      check(name, "stop bit phai bang 1", tx === 1'b1);
+      check(name, "tx_active phai bang 0 o stop bit", tx_active === 1'b0);
+      tests = tests + 1;
+      if (got === expv)
+        $display("[%0t] PASS: %s, phat 0x%h, thu duoc 0x%h", $time, name, expv, got);
+      else begin
+        errors = errors + 1;
+        $display("[%0t] FAIL: %s, mong doi 0x%h, thu duoc 0x%h", $time, name, expv, got);
+      end
+      @(posedge done_tx);
+      t_done = $realtime;
+      check(name, "done_tx phai len sau khoang 10 bit",
+            (t_done - t_fall) > 9.9*BIT_T && (t_done - t_fall) < 10.1*BIT_T);
+      @(negedge done_tx);
+      check(name, "done_tx phai rong 1 chu ky clock",
+            ($realtime - t_done) > 0.99*CLK_T && ($realtime - t_done) < 1.01*CLK_T);
+    end
+  endtask
+
+  // 6. Phat 1 byte roi thu va kiem tra
+  task automatic send_and_check(input [7:0] data, input string name);
+    begin
+      pulse_start(data);
+      capture_and_check(name, data);
+    end
+  endtask
+
+  // 7. Kich ban kiem tra
+  initial begin
+    errors = 0; tests = 0;
+    $timeformat(-6, 2, " us", 12);
+    rst = 1; start = 0; tx_data_in = 8'h00;
+    repeat (5) @(negedge clk);
+    rst = 0;
+    repeat (5) @(negedge clk);
+
+    // 7.1 Trang thai ranh
+    check("ranh", "tx phai bang 1 khi ranh", tx === 1'b1);
+    check("ranh", "tx_active phai bang 0 khi ranh", tx_active === 1'b0);
+    check("ranh", "done_tx phai bang 0 khi ranh", done_tx === 1'b0);
+
+    // 7.2 Thoi luong 1 bit: byte 0x01 co d0 = 1, tx len sau dung 1 bit start
+    pulse_start(8'h01);
+    @(negedge tx); t0 = $realtime;
+    @(posedge tx); t1 = $realtime;
+    check("do thoi gian bit", "start bit phai dai dung 694 chu ky clock",
+          (t1 - t0) > BIT_T - 0.01 && (t1 - t0) < BIT_T + 0.01);
+    @(posedge done_tx);
+    @(negedge done_tx);
+
+    // 7.3 Cac byte co ban
+    send_and_check(8'h41, "byte 0x41");
+    send_and_check(8'hA5, "byte 0xA5");
+    send_and_check(8'h00, "byte 0x00");
+    send_and_check(8'hFF, "byte 0xFF");
+
+    // 7.4 Walking one
+    for (k = 0; k < 8; k = k + 1)
+      send_and_check(8'h01 << k, $sformatf("walking one bit %0d", k));
+
+    // 7.5 Start luc dang ban phai bi bo qua
+    pulse_start(8'h3C);
+    fork
+      capture_and_check("bo qua start khi ban: 0x3C", 8'h3C);
+      begin
+        #(BIT_T*3);
+        pulse_start(8'hFF);
+      end
+    join
+
+    // 7.6 Phat lien tiep ngay sau done_tx
+    send_and_check(8'h69, "lien tiep 1/2: 0x69");
+    send_and_check(8'h96, "lien tiep 2/2: 0x96");
+
+    // 7.7 Reset giua khung: tx_active ve 0, tx ve muc ranh, sau do phat lai binh thuong
+    pulse_start(8'hA5);
+    #(BIT_T*3.5);
+    @(negedge clk); rst = 1;
+    repeat (3) @(negedge clk);
+    check("reset giua khung", "tx_active phai bang 0 khi reset", tx_active === 1'b0);
+    rst = 0;
+    repeat (3) @(negedge clk);
+    check("reset giua khung", "tx phai ve 1 sau reset", tx === 1'b1);
+    check("reset giua khung", "done_tx phai bang 0 sau reset", done_tx === 1'b0);
+    send_and_check(8'h7E, "sau reset giua khung: 0x7E");
+
+    $display("----------------------------------------");
+    if (errors == 0) $display("TRANSMITTER_TB: TAT CA PASS (%0d kiem tra)", tests);
+    else             $display("TRANSMITTER_TB: CO %0d LOI / %0d kiem tra", errors, tests);
+    $finish;
+  end
+
+  // 8. Chong treo
+  initial begin
+    #5_000_000;
+    $display("TRANSMITTER_TB: TIMEOUT");
+    $finish;
+  end
+
+endmodule

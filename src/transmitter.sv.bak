@@ -1,0 +1,17 @@
+module transmitter(clk,rst,start,tx_data_in,tx,tx_active,done_tx,we,full,empty);
+input logic clk;
+input logic rst;
+input logic start;
+input logic [7:0]tx_data_in;
+input logic we;
+output logic tx;
+output logic tx_active;
+output logic done_tx;
+output logic full
+output logic empty;
+
+logic [7:0]ff_out
+logic re;
+
+uart_tx utx (.clk(clk),.rst(rst),.start(start),.tx_data_in(ff_out),.tx(tx),.tx_active(),.done_tx(done_tx));
+FIFO_tx ftx (.clk(clk), .rst(rst),.ff_in(tx_data_in),.we(we),.re(re), .ff_out(ff_out), .full(full), .empty(empty));

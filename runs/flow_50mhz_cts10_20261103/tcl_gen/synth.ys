@@ -1,0 +1,118 @@
+# =====================================================================
+#  synth.ys  -  Tong hop (synthesis) UART bang Yosys
+#  PDK   : sky130A, thu vien cell sky130_fd_sc_hd, corner tt_025C_1v80
+#  Clock : 50 MHz  ->  chu ky 20 ns = 20000 ps  (dung o buoc abc -D)
+#  Chay  : ./run_synth.sh   (Yosys chay trong Docker image OpenLane)
+#  Dau ra: ../results/uart_manual.nl.v   (netlist cell sky130)
+#          ../reports/synth_area.rep, synth_cells.rep   (bao cao dien tich, so cell)
+# =====================================================================
+
+
+# =====================================================================
+#  BUOC 1 : DOC THU VIEN VA RTL                (Genus: read_libs, read_hdl)
+# =====================================================================
+
+# Doc thu vien cell sky130 (.lib).
+#   -lib             : chi lay ten cell va chan, coi cell la "hop den" (chua hieu ben trong)
+#   -setattr liberty_cell : danh dau day la cell thu vien that, de dfflibmap/abc dung duoc
+#   -overwrite       : neu module trung ten da co thi ghi de, khong bao loi
+# Ket qua mong doi: "Imported 428 cell types from liberty file."
+read_liberty -overwrite -setattr liberty_cell -lib /home/thu/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# Doc 6 file RTL cua UART (SystemVerilog, nen co co -sv).
+#   uart (top) goi receiver + transmitter; moi cai co FIFO va uart_rx/uart_tx ben trong.
+read_verilog -sv /home/thu/openlane2/designs/uart/src/uart.sv /home/thu/openlane2/designs/uart/src/receiver.sv /home/thu/openlane2/designs/uart/src/transmitter.sv /home/thu/openlane2/designs/uart/src/uart_tx.sv /home/thu/openlane2/designs/uart/src/uart_rx.sv /home/thu/openlane2/designs/uart/src/FIFO.sv
+
+
+# =====================================================================
+#  BUOC 2 : ELABORATE - dung cay phan cap    (Genus: elaborate)
+# =====================================================================
+
+# Chon module cao nhat = uart, kiem tra khong co module nao bi thieu (-check).
+hierarchy -check -top uart
+
+# Bien cac khoi "always" thanh mach: flip-flop ($dff), mux ($mux), ...
+proc
+
+# Dem cell dang TONG QUAT ($dff, $mux, $add...). Chua phai cell sky130.
+# Nen nhin: so $dff (flip-flop) va $mux. mem[16] cua FIFO van la "memory" luc nay.
+stat
+
+
+# =====================================================================
+#  BUOC 3 : TONG HOP TONG QUAT               (Genus: syn_generic)
+# =====================================================================
+
+# Toi uu logic, FLATTEN (xoa phan cap, tron cac module thanh 1).
+#   -run :fine  : chay cac buoc dau cua synth, dung truoc buoc "fine"
+# Sau buoc nay ten module con (rec.frx...) se mat, flip-flop bi doi ten kieu _2480_.
+synth -top uart -flatten -run :fine
+
+# Don gian hoa them (hang so, cell trung nhau, ...). -full = ky hon.
+opt -full
+
+# Bien mang nho mem[16] cua FIFO thanh flip-flop rieng le (16 x 8 = 128 FF moi FIFO).
+memory_map
+opt -full
+
+# Chuyen cell nang ($add, $mux ...) ve cong logic co ban (AND, OR, NOT...).
+techmap
+opt -fast
+
+# Dem lai: luc nay chi con cong logic co ban + flip-flop tong quat.
+stat
+
+
+# =====================================================================
+#  BUOC 4 : ANH XA SANG CELL SKY130          (Genus: syn_map)
+# =====================================================================
+
+# Doi flip-flop tong quat thanh cell flip-flop that cua sky130 (vd dfxtp_1).
+dfflibmap -liberty /home/thu/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+# Doi cong logic co ban thanh cell sky130 (nand2, mux4, a21oi...) bang ABC.
+#   -D 20000 : muc tieu thoi gian 20000 ps = 20 ns (50 MHz)
+abc -liberty /home/thu/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib -D 20000
+
+
+# =====================================================================
+#  BUOC 5 : DON DEP SAU ANH XA               (Genus: syn_opt)
+# =====================================================================
+
+# Xoa cell va day khong dung toi.
+opt_clean -purge
+
+# Tin hieu chua xac dinh (x) -> ep ve 0 de netlist ro rang.
+setundef -zero
+
+# Hang so 1 va 0 -> noi vao cell conb_1 (tie cell): chan HI cho "1", chan LO cho "0".
+#   -singleton : dung chung 1 cell cho moi hang so
+hilomap -singleton -hicell sky130_fd_sc_hd__conb_1 HI -locell sky130_fd_sc_hd__conb_1 LO
+
+# Tach day nhieu bit thanh tung bit, de netlist de doc.
+splitnets
+
+# Neu co day noi thang cong vao-ra, chen buffer buf_2 (chan A vao, chan X ra).
+insbuf -buf sky130_fd_sc_hd__buf_2 A X
+
+opt_clean -purge
+
+
+# =====================================================================
+#  BUOC 6 : BAO CAO VA GHI NETLIST           (Genus: report area, write_hdl)
+# =====================================================================
+
+# In so cell va DIEN TICH THAT (um^2) theo thu vien sky130, DONG THOI ghi ra file.
+# Nen nhin: "Number of cells" va "Chip area for module '\uart'".
+#   tee -o <file> <lenh> : chay <lenh> va ghi ket qua vao <file>
+# Bao cao 1: dien tich + so cell theo tung loai cell sky130
+tee -o /home/thu/openlane2/designs/uart/reports/synth_area.rep stat -liberty /home/thu/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+# Bao cao 2: thong ke cell dang liet ke (khong tinh dien tich)
+tee -o /home/thu/openlane2/designs/uart/reports/synth_cells.rep stat
+
+# Kiem tra loi (day ho, driver nhieu nguon...). Mong doi: "Found and reported 0 problems."
+check
+
+# Ghi netlist cell sky130 ra file (dung cho cac buoc floorplan, place ve sau).
+#   -noattr : bo thuoc tinh, -noexpr/-nohex/-nodec : ghi dang don gian, de doc
+write_verilog -noattr -noexpr -nohex -nodec /home/thu/openlane2/designs/uart/results/uart_manual.nl.v

@@ -1,0 +1,26 @@
+module FIFO_tx(clk,rst,ff_in,ff_out,we,full,empty);
+input clk;
+input rst;
+input [7:0]ff_in;
+input we;
+output [7:0]ff_out;
+output full;
+output empty;
+
+logic [7:0]mem[15:0];
+logic [3:0]wr_ptr;
+
+always_ff @(posedge clk)begin
+	if(rst)begin
+		wr_ptr <= 0;	
+	end
+	else begin
+		mem[wr_ptr]=ff_in;
+		wr_ptr = wr_ptr+1;
+	end
+end
+
+endmodule
+
+
+

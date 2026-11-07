@@ -1,0 +1,115 @@
+`timescale 1ns/1ps
+module receiver_tb();
+
+  localparam CLK_FREQ  = 80000000;
+  localparam BAUD_RATE = 115200;
+  localparam real CLK_T = 1.0e9/CLK_FREQ;    // 12.5 ns
+  localparam real BIT_T = 1.0e9/BAUD_RATE;   // 8680.56 ns (baud ly tuong)
+
+  reg clk, rst, rx;
+  wire [7:0] rx_data_out;
+  reg  [7:0] prev;
+  integer errors, tests, k;
+
+  // 1. DUT: bo nhan
+  uart_rx #(.clk_freq(CLK_FREQ), .baud_rate(BAUD_RATE)) dut (
+    .clk(clk), .rst(rst), .rx(rx), .rx_data_out(rx_data_out)
+  );
+
+  // 2. Clock 80 MHz (chu ky 12.5 ns)
+  initial clk = 0;
+  always #(CLK_T/2) clk = ~clk;
+
+  // 3. So sanh gia tri nhan duoc voi gia tri mong doi
+  task automatic check(input string name, input [7:0] got, input [7:0] expv);
+    begin
+      tests = tests + 1;
+      if (got === expv)
+        $display("[%0t] PASS: %s, nhan 0x%h", $time, name, got);
+      else begin
+        errors = errors + 1;
+        $display("[%0t] FAIL: %s, mong doi 0x%h, nhan 0x%h", $time, name, expv, got);
+      end
+    end
+  endtask
+
+  // 4. Gui 1 khung len rx: start, 8 bit (LSB truoc), stop.
+  //    Kiem tra rx_data_out tai giua stop bit. bit_t la thoi luong 1 bit.
+  task automatic send_frame(input [7:0] data, input real bit_t,
+                            input string name, input bit do_check);
+    integer i;
+    begin
+      rx = 0; #(bit_t);
+      for (i = 0; i < 8; i = i + 1) begin
+        rx = data[i]; #(bit_t);
+      end
+      rx = 1; #(bit_t/2);
+      if (do_check) check(name, rx_data_out, data);
+      #(bit_t/2);
+    end
+  endtask
+
+  // 5. Kich ban kiem tra
+  initial begin
+    errors = 0; tests = 0;
+    $timeformat(-6, 2, " us", 12);
+    rx = 1; rst = 1;
+    repeat (5) @(negedge clk);
+    rst = 0;
+    repeat (5) @(negedge clk);
+
+    // 5.1 Sau reset du lieu ra bang 0
+    check("sau reset", rx_data_out, 8'h00);
+
+    // 5.2 Cac byte co ban
+    send_frame(8'h41, BIT_T, "byte 0x41", 1);
+    send_frame(8'hA5, BIT_T, "byte 0xA5", 1);
+    send_frame(8'h00, BIT_T, "byte 0x00", 1);
+    send_frame(8'hFF, BIT_T, "byte 0xFF", 1);
+
+    // 5.3 Walking one: moi bit duoc kiem tra mot lan
+    for (k = 0; k < 8; k = k + 1)
+      send_frame(8'h01 << k, BIT_T, $sformatf("walking one bit %0d", k), 1);
+
+    // 5.4 Khung lien tiep, khong khoang nghi giua stop va start
+    send_frame(8'h3C, BIT_T, "lien tiep 1/2: 0x3C", 1);
+    send_frame(8'hC3, BIT_T, "lien tiep 2/2: 0xC3", 1);
+
+    // 5.5 Co khoang nghi dai giua cac khung
+    #(BIT_T*3.3);
+    send_frame(8'h5A, BIT_T, "sau khoang nghi: 0x5A", 1);
+
+    // 5.6 Start gia (glitch 2 us, ngan hon nua bit) phai bi bo qua
+    prev = rx_data_out;
+    rx = 0; #2000; rx = 1;
+    #(BIT_T*3);
+    check("glitch 2 us khong doi du lieu", rx_data_out, prev);
+    send_frame(8'h96, BIT_T, "sau glitch: 0x96", 1);
+
+    // 5.7 Dung sai baud rate +-2%
+    send_frame(8'hA5, BIT_T*1.02, "baud +2%: 0xA5", 1);
+    send_frame(8'h5A, BIT_T*0.98, "baud -2%: 0x5A", 1);
+
+    // 5.8 Reset giua khung: du lieu ve 0, sau do nhan lai binh thuong
+    rx = 0; #(BIT_T); rx = 1; #(BIT_T*2);
+    @(negedge clk); rst = 1;
+    repeat (3) @(negedge clk);
+    rst = 0;
+    #(BIT_T*2);
+    check("reset giua khung", rx_data_out, 8'h00);
+    send_frame(8'h7E, BIT_T, "sau reset giua khung: 0x7E", 1);
+
+    $display("----------------------------------------");
+    if (errors == 0) $display("RECEIVER_TB: TAT CA PASS (%0d kiem tra)", tests);
+    else             $display("RECEIVER_TB: CO %0d LOI / %0d kiem tra", errors, tests);
+    $finish;
+  end
+
+  // 6. Chong treo
+  initial begin
+    #5_000_000;
+    $display("RECEIVER_TB: TIMEOUT");
+    $finish;
+  end
+
+endmodule
